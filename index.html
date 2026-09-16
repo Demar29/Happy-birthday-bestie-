@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Naly's Birthday Smash! 🏸🧸</title>
+  <title>Naly's Birthday Challenge! 🏸🧸</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -23,7 +23,7 @@
     }
     .hud {
       position: absolute;
-      top: 20px; left: 50%;
+      top: 15px; left: 50%;
       transform: translateX(-50%);
       z-index: 2;
       pointer-events: none;
@@ -32,27 +32,79 @@
       padding: 0 10px;
     }
     h1 {
-      font-size: 1.8rem;
+      font-size: 1.6rem;
       font-weight: 800;
       color: #9f1239;
       text-shadow: 0 2px 8px rgba(255, 255, 255, 0.9);
     }
-    .score {
-      font-size: 1.3rem;
+    .score-board {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 6px;
+    }
+    .score, .high-score {
+      font-size: 1.1rem;
       font-weight: bold;
       color: #be123c;
-      margin-top: 4px;
-      background: rgba(255, 255, 255, 0.8);
-      display: inline-block;
-      padding: 4px 16px;
+      background: rgba(255, 255, 255, 0.85);
+      padding: 4px 14px;
       border-radius: 999px;
       backdrop-filter: blur(4px);
     }
-    .hint {
-      font-size: 0.85rem;
-      color: #9f1239;
-      margin-top: 6px;
-      font-weight: 600;
+    .toast {
+      position: absolute;
+      top: 100px; left: 50%;
+      transform: translateX(-50%);
+      background: #f43f5e;
+      color: white;
+      font-weight: bold;
+      padding: 8px 20px;
+      border-radius: 999px;
+      font-size: 1.2rem;
+      box-shadow: 0 4px 15px rgba(244, 63, 94, 0.4);
+      display: none;
+      z-index: 3;
+      animation: pop 0.3s ease-out;
+    }
+    @keyframes pop {
+      0% { transform: translateX(-50%) scale(0.5); }
+      100% { transform: translateX(-50%) scale(1); }
+    }
+    .game-over-screen {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(136, 19, 55, 0.75);
+      backdrop-filter: blur(6px);
+      z-index: 10;
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      color: white;
+    }
+    .game-over-screen h2 {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+    }
+    .game-over-screen p {
+      font-size: 1.3rem;
+      margin-bottom: 20px;
+    }
+    .restart-btn {
+      background: #f43f5e;
+      color: white;
+      border: none;
+      padding: 12px 32px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      border-radius: 999px;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+    .restart-btn:active {
+      transform: scale(0.95);
     }
   </style>
 </head>
@@ -60,8 +112,18 @@
 
   <div class="hud">
     <h1>🎀 Happy 16th Naly! 🎀</h1>
-    <div class="score">Hits: <span id="score">0</span></div>
-    <div class="hint">Use your Badminton Paddle 🏸 to bounce the items!</div>
+    <div class="score-board">
+      <div class="score">Score: <span id="score">0</span></div>
+      <div class="high-score">High Score: <span id="high-score">0</span></div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast">🎉 NEW HIGH SCORE! 🎉</div>
+
+  <div id="gameOverScreen" class="game-over-screen">
+    <h2>Game Over! 💔</h2>
+    <p>Final Score: <span id="finalScore">0</span></p>
+    <button class="restart-btn" onclick="resetGame()">Restart 🏸</button>
   </div>
 
   <canvas id="canvas"></canvas>
@@ -70,13 +132,24 @@
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
     const scoreEl = document.getElementById('score');
+    const highScoreEl = document.getElementById('high-score');
+    const finalScoreEl = document.getElementById('finalScore');
+    const toast = document.getElementById('toast');
+    const gameOverScreen = document.getElementById('gameOverScreen');
 
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
     let score = 0;
+    let highScore = localStorage.getItem('naly_high_score') || 0;
+    highScoreEl.innerText = highScore;
+
+    let isGameOver = false;
+    let speedMultiplier = 1;
+    let nextMilestone = 100;
+
     const items = ['🧸', '🌹', '🐼', '🦫', '🍰', '🌧️', '✨'];
-    const balls = [];
+    let balls = [];
 
     const paddle = { x: canvas.width / 2, y: canvas.height - 100, radius: 40 };
 
@@ -87,8 +160,8 @@
         this.char = items[Math.floor(Math.random() * items.length)];
         this.size = 36;
         this.vx = (Math.random() - 0.5) * 6;
-        this.vy = Math.random() * -4 - 3;
-        this.gravity = 0.15;
+        this.vy = Math.random() * -3 - 2;
+        this.gravity = 0.12 * speedMultiplier;
       }
 
       draw() {
@@ -99,8 +172,8 @@
       }
 
       update() {
-        this.vy += this.gravity;
-        this.x += this.vx;
+        this.vy += this.gravity * speedMultiplier;
+        this.x += this.vx * speedMultiplier;
         this.y += this.vy;
 
         if (this.x - 15 < 0 || this.x + 15 > canvas.width) {
@@ -109,23 +182,46 @@
 
         const dist = Math.hypot(this.x - paddle.x, this.y - paddle.y);
         if (dist < paddle.radius + 15 && this.vy > 0) {
-          this.vy = -Math.abs(this.vy) * 0.95 - 2;
+          this.vy = -Math.abs(this.vy) - 3;
           this.vx += (this.x - paddle.x) * 0.15;
-          score++;
+          score += 10;
           scoreEl.innerText = score;
+
+          // Increase speed as score increases
+          speedMultiplier = 1 + (score / 200);
+
+          // Check Milestone (every 100 points)
+          if (score >= nextMilestone) {
+            showToast(`🎉 ${nextMilestone} POINTS! NEW HIGH SCORE! 🎉`);
+            nextMilestone += 100;
+          }
+
+          // Save High Score
+          if (score > highScore) {
+            highScore = score;
+            localStorage.setItem('naly_high_score', highScore);
+            highScoreEl.innerText = highScore;
+          }
         }
 
-        if (this.y > canvas.height + 50) {
-          this.y = -20;
-          this.x = Math.random() * canvas.width;
-          this.vy = 2;
-          this.vx = (Math.random() - 0.5) * 4;
+        // Drop Rule: Missed item = Game Over
+        if (this.y > canvas.height - 20) {
+          endGame();
         }
       }
     }
 
-    for (let i = 0; i < 8; i++) {
-      balls.push(new BouncingItem(Math.random() * canvas.width, Math.random() * (canvas.height / 2)));
+    function showToast(text) {
+      toast.innerText = text;
+      toast.style.display = 'block';
+      setTimeout(() => { toast.style.display = 'none'; }, 2000);
+    }
+
+    function initBalls() {
+      balls = [];
+      for (let i = 0; i < 4; i++) {
+        balls.push(new BouncingItem(Math.random() * (canvas.width - 60) + 30, Math.random() * (canvas.height / 3)));
+      }
     }
 
     function updatePaddle(e) {
@@ -138,7 +234,25 @@
     window.addEventListener('mousemove', updatePaddle);
     window.addEventListener('touchmove', updatePaddle);
 
+    function endGame() {
+      isGameOver = true;
+      finalScoreEl.innerText = score;
+      gameOverScreen.style.display = 'flex';
+    }
+
+    function resetGame() {
+      score = 0;
+      speedMultiplier = 1;
+      nextMilestone = 100;
+      isGameOver = false;
+      scoreEl.innerText = score;
+      gameOverScreen.style.display = 'none';
+      initBalls();
+      animate();
+    }
+
     function animate() {
+      if (isGameOver) return;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       ctx.font = '50px serif';
@@ -154,6 +268,7 @@
       requestAnimationFrame(animate);
     }
 
+    initBalls();
     animate();
   </script>
 </body>
