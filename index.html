@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Naly's Birthday Smash! 🏸🎂</title>
+  <title>Naly's Birthday Smash! 🏸💖</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      background: #0f172a;
-      color: #fff;
+      background: linear-gradient(135deg, #ffdde1 0%, #ee9ca7 100%);
+      color: #881337;
       font-family: system-ui, -apple-system, sans-serif;
       overflow: hidden;
       height: 100vh;
@@ -22,7 +22,7 @@
     }
     .hud {
       position: absolute;
-      top: 15px; left: 50%;
+      top: 20px; left: 50%;
       transform: translateX(-50%);
       z-index: 2;
       pointer-events: none;
@@ -31,27 +31,34 @@
       padding: 0 10px;
     }
     h1 {
-      font-size: 1.6rem;
-      color: #f43f5e;
-      text-shadow: 0 0 10px rgba(244, 63, 94, 0.5);
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: #9f1239;
+      text-shadow: 0 2px 10px rgba(255, 255, 255, 0.8);
     }
     .score {
-      font-size: 1.2rem;
+      font-size: 1.3rem;
       font-weight: bold;
-      color: #facc15;
+      color: #be123c;
       margin-top: 4px;
+      background: rgba(255, 255, 255, 0.4);
+      display: inline-block;
+      padding: 4px 16px;
+      border-radius: 999px;
+      backdrop-filter: blur(4px);
     }
     .hint {
       font-size: 0.85rem;
-      opacity: 0.7;
-      margin-top: 2px;
+      color: #9f1239;
+      margin-top: 6px;
+      font-weight: 600;
     }
   </style>
 </head>
 <body>
 
   <div class="hud">
-    <h1>🎉 Happy 16th Naly! 🎉</h1>
+    <h1>🎀 Happy 16th Naly! 🎀</h1>
     <div class="score">Hits: <span id="score">0</span></div>
     <div class="hint">Use your Badminton Paddle 🏸 to bounce the items!</div>
   </div>
@@ -70,7 +77,6 @@
     const items = ['🌹', '🐼', '🦫', '🍰', '🌧️', '✨'];
     const balls = [];
 
-    // Paddle setup
     const paddle = { x: canvas.width / 2, y: canvas.height - 100, radius: 40 };
 
     class BouncingItem {
@@ -78,7 +84,7 @@
         this.x = x;
         this.y = y;
         this.char = items[Math.floor(Math.random() * items.length)];
-        this.size = 32;
+        this.size = 34;
         this.vx = (Math.random() - 0.5) * 6;
         this.vy = Math.random() * -4 - 3;
         this.gravity = 0.15;
@@ -96,12 +102,10 @@
         this.x += this.vx;
         this.y += this.vy;
 
-        // Bounce off walls
         if (this.x - 15 < 0 || this.x + 15 > canvas.width) {
           this.vx *= -1;
         }
 
-        // Check collision with paddle
         const dist = Math.hypot(this.x - paddle.x, this.y - paddle.y);
         if (dist < paddle.radius + 15 && this.vy > 0) {
           this.vy = -Math.abs(this.vy) * 0.95 - 2;
@@ -110,7 +114,6 @@
           scoreEl.innerText = score;
         }
 
-        // Reset if it falls past bottom
         if (this.y > canvas.height + 50) {
           this.y = -20;
           this.x = Math.random() * canvas.width;
@@ -120,12 +123,10 @@
       }
     }
 
-    // Spawn starting items
     for (let i = 0; i < 8; i++) {
       balls.push(new BouncingItem(Math.random() * canvas.width, Math.random() * (canvas.height / 2)));
     }
 
-    // Track mouse / touch movement
     function updatePaddle(e) {
       const clientX = e.touches ? e.touches[0].clientX : e.clientX;
       const clientY = e.touches ? e.touches[0].clientY : e.clientY;
@@ -139,13 +140,11 @@
     function animate() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Draw Badminton Paddle Indicator
       ctx.font = '50px serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText('🏸', paddle.x, paddle.y);
 
-      // Update balls
       balls.forEach(ball => {
         ball.update();
         ball.draw();
