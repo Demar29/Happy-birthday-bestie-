@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Happy 16th Birthday Naly! 🎂</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background: linear-gradient(to bottom, #1e3c72, #2a5298);
+      color: #fff;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      overflow: hidden;
+      height: 100vh;
+      text-align: center;
+    }
+    #canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+    .ui-layer {
+      position: relative;
+      z-index: 2;
+      pointer-events: none;
+      padding: 20px;
+    }
+    h1 {
+      font-size: 2.5rem;
+      margin-top: 10px;
+      text-shadow: 0 0 10px rgba(0,0,0,0.5);
+    }
+    p {
+      font-size: 1.1rem;
+      opacity: 0.9;
+    }
+    .instructions {
+      position: absolute;
+      bottom: 25px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.4);
+      padding: 10px 20px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="ui-layer">
+    <h1>🎉 Happy 16th Birthday Naly! 🎉</h1>
+    <p>Click anywhere on the screen to drop floating surprises!</p>
+    <div class="instructions">Drag icons around or click to spawn more 🌹 Capybara Power! 🐼</div>
+  </div>
+
+  <canvas id="canvas"></canvas>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    window.addEventListener('resize', () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    });
+
+    const items = ['🌹', '🐼', '🦫', '🏸', '🌧️', '✨'];
+    const elements = [];
+    let draggedElement = null;
+
+    class FloatingItem {
+      constructor(x, y, char) {
+        this.x = x;
+        this.y = y;
+        this.char = char;
+        this.size = Math.random() * 20 + 30;
+        this.vx = (Math.random() - 0.5) * 2;
+        this.vy = (Math.random() - 0.5) * 2;
+        this.isDragging = false;
+      }
+
+      draw() {
+        ctx.font = `${this.size}px serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(this.char, this.x, this.y);
+      }
+
+      update() {
+        if (!this.isDragging) {
+          this.x += this.vx;
+          this.y += this.vy;
+
+          if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+          if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+        }
+      }
+    }
+
+    // Initialize initial elements
+    for (let i = 0; i < 25; i++) {
+      const x = Math.random() * canvas.width;
+      const y = Math.random() * canvas.height;
+      const char = items[Math.floor(Math.random() * items.length)];
+      elements.push(new FloatingItem(x, y, char));
+    }
+
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      elements.forEach(item => {
+        item.update();
+        item.draw();
+      });
+      requestAnimationFrame(animate);
+    }
+
+    animate();
+
+    // Interaction handling
+    canvas.addEventListener('mousedown', (e) => {
+      const mouseX = e.clientX;
+      const mouseY = e.clientY;
+
+      let found = false;
+      elements.forEach(item => {
+        const dist = Math.hypot(item.x - mouseX, item.y - mouseY);
+        if (dist < item.size / 2) {
+          draggedElement = item;
+          item.isDragging = true;
+          found = true;
+        }
+      });
+
+      if (!found) {
+        const char = items[Math.floor(Math.random() * items.length)];
+        elements.push(new FloatingItem(mouseX, mouseY, char));
+      }
+    });
+
+    canvas.addEventListener('mousemove', (e) => {
+      if (draggedElement) {
+        draggedElement.x = e.clientX;
+        draggedElement.y = e.clientY;
+      }
+    });
+
+    canvas.addEventListener('mouseup', () => {
+      if (draggedElement) {
+        draggedElement.isDragging = false;
+        draggedElement = null;
+      }
+    });
+  </script>
+</body>
+</html>
