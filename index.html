@@ -3,62 +3,57 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Happy 16th Birthday Naly! 🎂</title>
+  <title>Naly's Birthday Smash! 🏸🎂</title>
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      background: linear-gradient(to bottom, #1e3c72, #2a5298);
+      background: #0f172a;
       color: #fff;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: system-ui, -apple-system, sans-serif;
       overflow: hidden;
       height: 100vh;
-      text-align: center;
+      user-select: none;
     }
     #canvas {
       position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
       z-index: 1;
     }
-    .ui-layer {
-      position: relative;
+    .hud {
+      position: absolute;
+      top: 15px; left: 50%;
+      transform: translateX(-50%);
       z-index: 2;
       pointer-events: none;
-      padding: 20px;
+      text-align: center;
+      width: 100%;
+      padding: 0 10px;
     }
     h1 {
-      font-size: 2.5rem;
-      margin-top: 10px;
-      text-shadow: 0 0 10px rgba(0,0,0,0.5);
+      font-size: 1.6rem;
+      color: #f43f5e;
+      text-shadow: 0 0 10px rgba(244, 63, 94, 0.5);
     }
-    p {
-      font-size: 1.1rem;
-      opacity: 0.9;
+    .score {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #facc15;
+      margin-top: 4px;
     }
-    .instructions {
-      position: absolute;
-      bottom: 25px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(0, 0, 0, 0.4);
-      padding: 10px 20px;
-      border-radius: 20px;
-      font-size: 0.9rem;
+    .hint {
+      font-size: 0.85rem;
+      opacity: 0.7;
+      margin-top: 2px;
     }
   </style>
 </head>
 <body>
 
-  <div class="ui-layer">
-    <h1>🎉 Happy 16th Birthday Naly! 🎉</h1>
-    <p>Click anywhere on the screen to drop floating surprises!</p>
-    <div class="instructions">Drag icons around or click to spawn more 🌹 Capybara Power! 🐼</div>
+  <div class="hud">
+    <h1>🎉 Happy 16th Naly! 🎉</h1>
+    <div class="score">Hits: <span id="score">0</span></div>
+    <div class="hint">Use your Badminton Paddle 🏸 to bounce the items!</div>
   </div>
 
   <canvas id="canvas"></canvas>
@@ -66,28 +61,27 @@
   <script>
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
+    const scoreEl = document.getElementById('score');
 
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
-    window.addEventListener('resize', () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    });
+    let score = 0;
+    const items = ['🌹', '🐼', '🦫', '🍰', '🌧️', '✨'];
+    const balls = [];
 
-    const items = ['🌹', '🐼', '🦫', '🏸', '🌧️', '✨'];
-    const elements = [];
-    let draggedElement = null;
+    // Paddle setup
+    const paddle = { x: canvas.width / 2, y: canvas.height - 100, radius: 40 };
 
-    class FloatingItem {
-      constructor(x, y, char) {
+    class BouncingItem {
+      constructor(x, y) {
         this.x = x;
         this.y = y;
-        this.char = char;
-        this.size = Math.random() * 20 + 30;
-        this.vx = (Math.random() - 0.5) * 2;
-        this.vy = (Math.random() - 0.5) * 2;
-        this.isDragging = false;
+        this.char = items[Math.floor(Math.random() * items.length)];
+        this.size = 32;
+        this.vx = (Math.random() - 0.5) * 6;
+        this.vy = Math.random() * -4 - 3;
+        this.gravity = 0.15;
       }
 
       draw() {
@@ -98,69 +92,69 @@
       }
 
       update() {
-        if (!this.isDragging) {
-          this.x += this.vx;
-          this.y += this.vy;
+        this.vy += this.gravity;
+        this.x += this.vx;
+        this.y += this.vy;
 
-          if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
-          if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+        // Bounce off walls
+        if (this.x - 15 < 0 || this.x + 15 > canvas.width) {
+          this.vx *= -1;
+        }
+
+        // Check collision with paddle
+        const dist = Math.hypot(this.x - paddle.x, this.y - paddle.y);
+        if (dist < paddle.radius + 15 && this.vy > 0) {
+          this.vy = -Math.abs(this.vy) * 0.95 - 2;
+          this.vx += (this.x - paddle.x) * 0.15;
+          score++;
+          scoreEl.innerText = score;
+        }
+
+        // Reset if it falls past bottom
+        if (this.y > canvas.height + 50) {
+          this.y = -20;
+          this.x = Math.random() * canvas.width;
+          this.vy = 2;
+          this.vx = (Math.random() - 0.5) * 4;
         }
       }
     }
 
-    // Initialize initial elements
-    for (let i = 0; i < 25; i++) {
-      const x = Math.random() * canvas.width;
-      const y = Math.random() * canvas.height;
-      const char = items[Math.floor(Math.random() * items.length)];
-      elements.push(new FloatingItem(x, y, char));
+    // Spawn starting items
+    for (let i = 0; i < 8; i++) {
+      balls.push(new BouncingItem(Math.random() * canvas.width, Math.random() * (canvas.height / 2)));
     }
+
+    // Track mouse / touch movement
+    function updatePaddle(e) {
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      paddle.x = clientX;
+      paddle.y = clientY;
+    }
+
+    window.addEventListener('mousemove', updatePaddle);
+    window.addEventListener('touchmove', updatePaddle);
 
     function animate() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      elements.forEach(item => {
-        item.update();
-        item.draw();
+
+      // Draw Badminton Paddle Indicator
+      ctx.font = '50px serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('🏸', paddle.x, paddle.y);
+
+      // Update balls
+      balls.forEach(ball => {
+        ball.update();
+        ball.draw();
       });
+
       requestAnimationFrame(animate);
     }
 
     animate();
-
-    // Interaction handling
-    canvas.addEventListener('mousedown', (e) => {
-      const mouseX = e.clientX;
-      const mouseY = e.clientY;
-
-      let found = false;
-      elements.forEach(item => {
-        const dist = Math.hypot(item.x - mouseX, item.y - mouseY);
-        if (dist < item.size / 2) {
-          draggedElement = item;
-          item.isDragging = true;
-          found = true;
-        }
-      });
-
-      if (!found) {
-        const char = items[Math.floor(Math.random() * items.length)];
-        elements.push(new FloatingItem(mouseX, mouseY, char));
-      }
-    });
-
-    canvas.addEventListener('mousemove', (e) => {
-      if (draggedElement) {
-        draggedElement.x = e.clientX;
-        draggedElement.y = e.clientY;
-      }
-    });
-
-    canvas.addEventListener('mouseup', () => {
-      if (draggedElement) {
-        draggedElement.isDragging = false;
-        draggedElement = null;
-      }
-    });
   </script>
 </body>
 </html>
