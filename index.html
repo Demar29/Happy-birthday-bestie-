@@ -3,11 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Naly's Birthday Smash! 🏸💖</title>
+  <title>Naly's Birthday Smash! 🏸🧸</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      background: linear-gradient(135deg, #ffdde1 0%, #ee9ca7 100%);
+      background-color: #ffe4e6;
+      background-image: 
+        linear-gradient(90deg, rgba(244, 114, 182, 0.2) 50%, transparent 50%),
+        linear-gradient(rgba(244, 114, 182, 0.2) 50%, transparent 50%);
+      background-size: 60px 60px;
       color: #881337;
       font-family: system-ui, -apple-system, sans-serif;
       overflow: hidden;
@@ -34,14 +38,14 @@
       font-size: 1.8rem;
       font-weight: 800;
       color: #9f1239;
-      text-shadow: 0 2px 10px rgba(255, 255, 255, 0.8);
+      text-shadow: 0 2px 8px rgba(255, 255, 255, 0.9);
     }
     .score {
       font-size: 1.3rem;
       font-weight: bold;
       color: #be123c;
       margin-top: 4px;
-      background: rgba(255, 255, 255, 0.4);
+      background: rgba(255, 255, 255, 0.65);
       display: inline-block;
       padding: 4px 16px;
       border-radius: 999px;
@@ -74,7 +78,7 @@
     canvas.height = window.innerHeight;
 
     let score = 0;
-    const items = ['🌹', '🐼', '🦫', '🍰', '🌧️', '✨'];
+    const items = ['🧸', '🌹', '🐼', '🦫', '🍰', '🌧️', '✨'];
     const balls = [];
 
     const paddle = { x: canvas.width / 2, y: canvas.height - 100, radius: 40 };
@@ -84,7 +88,7 @@
         this.x = x;
         this.y = y;
         this.char = items[Math.floor(Math.random() * items.length)];
-        this.size = 34;
+        this.size = 36;
         this.vx = (Math.random() - 0.5) * 6;
         this.vy = Math.random() * -4 - 3;
         this.gravity = 0.15;
